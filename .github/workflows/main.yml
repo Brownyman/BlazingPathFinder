@@ -21,7 +21,7 @@ jobs:
 
     # publishes Blazor project to the release-folder
     - name: Publish .NET Core Project
-      run: dotnet publish BlazingPathFinder.csproj -c Release -o release --nologo
+      run: dotnet publish BlazingPathFinder/BlazingPathFinder.csproj -c Release -o release --nologo
        
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@3.7.1
