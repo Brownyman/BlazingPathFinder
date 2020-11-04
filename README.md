@@ -6,7 +6,7 @@ This project is meant to be a port for Clement Mihailescu's [Pathfinding Visuali
 ## Algorithms
 
 Dijksta - Done
-more to add
+
 
 
 
