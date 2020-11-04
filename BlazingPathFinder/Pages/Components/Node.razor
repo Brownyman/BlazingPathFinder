@@ -1,0 +1,65 @@
+﻿<div class="node @classValue">
+
+</div>
+
+@code {
+
+	[Parameter]
+	public NodeModel Model
+	{
+		get { return _model; }
+		set
+		{
+			_model = value;
+			isAnimatedVisit = Model.ShowVist;
+			isAnimatePath = Model.ShowPath;
+		}
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await UpdateClassValues();
+	}
+
+	private NodeModel _model { get; set; }
+
+	private string classValue { get; set; }
+
+	private bool _isAnimatePath { get; set; }
+	public bool isAnimatePath
+	{
+		get { return _isAnimatePath; }
+		set
+		{
+			_isAnimatePath = value;
+			UpdateClassValues();
+		}
+	}
+
+	private bool _isAnimatedVisit { get; set; }
+	public bool isAnimatedVisit
+	{
+		get { return _isAnimatedVisit; }
+		set
+		{
+			_isAnimatedVisit = value;
+			UpdateClassValues();
+		}
+	}
+
+	private async Task UpdateClassValues()
+	{
+		if (Model.IsFinish)
+			classValue = "node-finish";
+		else if (Model.IsStart)
+			classValue = "node-start";
+		else if (isAnimatedVisit)
+			classValue = "node-visited";
+		else if (isAnimatePath)
+			classValue = "node-shortest-path";
+		else
+			classValue = "";
+	}
+
+
+}

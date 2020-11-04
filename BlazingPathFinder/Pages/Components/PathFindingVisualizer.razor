@@ -1,0 +1,125 @@
+﻿@inject IJSRuntime jsRuntime
+
+<div class="grid">
+	@if (!loading)
+	{
+		<h1>Loading</h1>
+	}
+	else
+	{
+
+		<button @onclick="@VisualizeDijkstra">Dijkstra</button>
+		<button @onclick="@LoadGrid">Load Grid</button>
+		if (Grid != null)
+		{
+			@for (int i = 0; i < Grid.Count; i++)
+			{
+				<div>
+					@for (int ii = 0; ii < Grid[i].Node_Row.Count; ii++)
+					{
+						<Node Model="Grid[i].Node_Row[ii]"></Node>
+					}
+				</div>
+			}
+		}
+	}
+</div>
+
+@code {
+
+	const int START_NODE_ROW = 10;
+	const int START_NODE_COL = 15;
+	const int FINISH_NODE_ROW = 10;
+	const int FINISH_NODE_COL = 35;
+
+	private bool loading = false;
+	private List<NodeModelArray> Grid { get; set; }
+	private NodeModel StartNode { get; set; }
+	private NodeModel FinishNode { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		//Grid = await SetInitialGridAsync();
+		await jsRuntime.InvokeAsync<string>("console.log", "On Init");
+		loading = true;
+	}
+
+	private async Task<List<NodeModelArray>> SetInitialGridAsync()
+	{
+		try
+		{
+			await WebConsoleWrite("Start building grid");
+			List<NodeModelArray> grid = new List<NodeModelArray>();
+			for (int row = 0; row < 20; row++)
+			{
+				await WebConsoleWrite($"Building row : {row}");
+				List<NodeModel> currentRow = new List<NodeModel>();
+				for (int col = 0; col < 50; col++)
+				{
+					await WebConsoleWrite($"Building col : {col}");
+					currentRow.Add(new NodeModel(col,
+					row,
+					(row == START_NODE_ROW && col == START_NODE_COL),
+					(row == FINISH_NODE_ROW && col == FINISH_NODE_COL)));
+				}
+				currentRow.TrimExcess();
+				grid.Add(new NodeModelArray(currentRow));
+			}
+			await WebConsoleWrite($"trimming array");
+			grid.TrimExcess();
+			return grid;
+		}
+		catch (Exception ex)
+		{
+			await WebConsoleWrite($"{ex.Message}");
+			return null;
+		}
+	}
+
+	private async Task LoadGrid()
+	{
+		Grid = await SetInitialGridAsync();
+	}
+
+	private async Task VisualizeDijkstra()
+	{
+		StartNode = Grid[START_NODE_ROW].Node_Row[START_NODE_COL];
+		FinishNode = Grid[FINISH_NODE_ROW].Node_Row[FINISH_NODE_COL];
+		List<NodeModel> visitedNodesInOrder = Dijkstra.dijkstra(Grid, StartNode, FinishNode);
+		List<NodeModel> nodesInShortestPathOrder = Dijkstra.GetNodesInShortestPathOrder(FinishNode);
+		await AnimateDijkstra(visitedNodesInOrder, nodesInShortestPathOrder);
+	}
+
+	private async Task AnimateDijkstra(List<NodeModel> visitedNodesInOrder, List<NodeModel> nodesInShortestPathOrder)
+	{
+		for (int i = 0; i <= visitedNodesInOrder.Count; i++)
+		{
+			if (i == visitedNodesInOrder.Count)
+			{
+				await AnimateShortestPath(nodesInShortestPathOrder);
+				return;
+			}
+
+			Grid[visitedNodesInOrder[i].Row].Node_Row[visitedNodesInOrder[i].Col].ShowVist = true;
+			InvokeAsync(StateHasChanged);
+			await Task.Delay(1);
+		}
+	}
+
+	private async Task AnimateShortestPath(List<NodeModel> nodesInShortestPathOrder)
+	{
+		for (int i = 0; i < nodesInShortestPathOrder.Count; i++)
+		{
+			Grid[nodesInShortestPathOrder[i].Row].Node_Row[nodesInShortestPathOrder[i].Col].ShowVist = false;
+			Grid[nodesInShortestPathOrder[i].Row].Node_Row[nodesInShortestPathOrder[i].Col].ShowPath = true;
+			InvokeAsync(StateHasChanged);
+			await Task.Delay(1);
+
+		}
+	}
+
+	private async Task WebConsoleWrite(string msg)
+	{
+		await jsRuntime.InvokeAsync<string>("console.log", msg);
+	}
+}
