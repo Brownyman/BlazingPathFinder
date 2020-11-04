@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CDeploy to Github Pages
 
 # Run workflow on every push to the master branch
@@ -7,20 +5,16 @@ on:
   push:
     branches: [ master ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   deploy-to-github-pages:
   # use ubuntu-latest image to run steps on
-    runs-on: unbuntu-latest
-       
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    runs-on: ubuntu-latest
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # uses GitHub's checkout action to checkout code from the master branch
       - uses: actions/checkout@v2
 
       # sets up .NET Core SDK 3.1
-      - name: Setup .Net Core SDK
+      - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v1.6.0
         with:
           dotnet-version: 3.1
