@@ -1,4 +1,4 @@
-name: CDeploy to Github Pages
+name: deploy-to-github-pages
 
 # Run workflow on every push to the master branch
 on:
