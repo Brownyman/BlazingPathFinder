@@ -10,7 +10,7 @@ Demo available [here](https://brownyman.github.io/BlazingPathFinder/)
 
 ## Algorithms
 
-Dijksta - Done
+Dijkstra - Done
 
 
 
