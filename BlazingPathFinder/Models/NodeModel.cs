@@ -30,5 +30,12 @@ namespace BlazingPathFinder.Models
 		public NodeModel PrevNode { get; set; }
 
 		public (int, int) ReturnColAndRow() => (Col, Row);
+
+		public void ClearVists()
+		{
+			IsVisited = false;
+			ShowVist = false;
+			ShowPath = false;
+		}
 	}
 }

@@ -7,9 +7,12 @@
 	}
 	else
 	{
+		<div style="margin-bottom:10px;">
+			<button @onclick="@CreateRandomGridAsync">New Grid</button>
+			<button @onclick="@ResetGridAsync">Reset Grid</button>
+			<button @onclick="@VisualizeDijkstra">Dijkstra</button>
+		</div>
 
-		<button @onclick="@VisualizeDijkstra">Dijkstra</button>
-		<button @onclick="@LoadGrid">Load Grid</button>
 		if (Grid != null)
 		{
 			@for (int i = 0; i < Grid.Count; i++)
@@ -27,10 +30,10 @@
 
 @code {
 
-	const int START_NODE_ROW = 10;
-	const int START_NODE_COL = 15;
-	const int FINISH_NODE_ROW = 10;
-	const int FINISH_NODE_COL = 35;
+	static int START_NODE_ROW = 8;
+	static int START_NODE_COL = 15;
+	static int FINISH_NODE_ROW = 12;
+	static int FINISH_NODE_COL = 35;
 
 	private bool loading = false;
 	private List<NodeModelArray> Grid { get; set; }
@@ -39,24 +42,48 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		//Grid = await SetInitialGridAsync();
-		await jsRuntime.InvokeAsync<string>("console.log", "On Init");
+		Grid = await CreateGridAsync();
 		loading = true;
 	}
 
-	private async Task<List<NodeModelArray>> SetInitialGridAsync()
+	private async Task CreateRandomGridAsync()
+	{
+		Random r = new Random();
+
+		await ResetGridAsync();
+		Grid[START_NODE_ROW].Node_Row[START_NODE_COL].IsStart = false;
+		Grid[FINISH_NODE_ROW].Node_Row[FINISH_NODE_COL].IsFinish = false;
+
+		START_NODE_ROW = r.Next(21);
+		START_NODE_COL = r.Next(51);
+		FINISH_NODE_ROW = r.Next(21);
+		FINISH_NODE_COL = r.Next(51);
+
+		Grid[START_NODE_ROW].Node_Row[START_NODE_COL].IsStart = true;
+		Grid[FINISH_NODE_ROW].Node_Row[FINISH_NODE_COL].IsFinish = true;
+
+		await InvokeAsync(StateHasChanged);
+	}
+
+	private async Task ResetGridAsync()
+	{
+		foreach (NodeModelArray row in Grid)
+			foreach (NodeModel col in row.Node_Row)
+				if (col.IsVisited) col.ClearVists();
+
+		await InvokeAsync(StateHasChanged);
+	}
+
+	private async Task<List<NodeModelArray>> CreateGridAsync()
 	{
 		try
 		{
-			await WebConsoleWrite("Start building grid");
 			List<NodeModelArray> grid = new List<NodeModelArray>();
 			for (int row = 0; row < 20; row++)
 			{
-				await WebConsoleWrite($"Building row : {row}");
 				List<NodeModel> currentRow = new List<NodeModel>();
 				for (int col = 0; col < 50; col++)
 				{
-					await WebConsoleWrite($"Building col : {col}");
 					currentRow.Add(new NodeModel(col,
 					row,
 					(row == START_NODE_ROW && col == START_NODE_COL),
@@ -65,20 +92,18 @@
 				currentRow.TrimExcess();
 				grid.Add(new NodeModelArray(currentRow));
 			}
-			await WebConsoleWrite($"trimming array");
 			grid.TrimExcess();
 			return grid;
 		}
 		catch (Exception ex)
 		{
-			await WebConsoleWrite($"{ex.Message}");
 			return null;
 		}
 	}
 
 	private async Task LoadGrid()
 	{
-		Grid = await SetInitialGridAsync();
+		Grid = await CreateGridAsync();
 	}
 
 	private async Task VisualizeDijkstra()
@@ -101,7 +126,7 @@
 			}
 
 			Grid[visitedNodesInOrder[i].Row].Node_Row[visitedNodesInOrder[i].Col].ShowVist = true;
-			InvokeAsync(StateHasChanged);
+			await InvokeAsync(StateHasChanged);
 			await Task.Delay(1);
 		}
 	}
@@ -112,14 +137,9 @@
 		{
 			Grid[nodesInShortestPathOrder[i].Row].Node_Row[nodesInShortestPathOrder[i].Col].ShowVist = false;
 			Grid[nodesInShortestPathOrder[i].Row].Node_Row[nodesInShortestPathOrder[i].Col].ShowPath = true;
-			InvokeAsync(StateHasChanged);
+			await InvokeAsync(StateHasChanged);
 			await Task.Delay(1);
 
 		}
-	}
-
-	private async Task WebConsoleWrite(string msg)
-	{
-		await jsRuntime.InvokeAsync<string>("console.log", msg);
 	}
 }
