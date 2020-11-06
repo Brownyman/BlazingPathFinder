@@ -1,6 +1,4 @@
-﻿@inject IJSRuntime jsRuntime
-
-<div class="grid">
+﻿<div class="grid">
 	@if (!loading)
 	{
 		<h1>Loading</h1>
@@ -15,131 +13,24 @@
 
 		if (Grid != null)
 		{
-			@for (int i = 0; i < Grid.Count; i++)
-			{
-				<div>
-					@for (int ii = 0; ii < Grid[i].Node_Row.Count; ii++)
-					{
-						<Node Model="Grid[i].Node_Row[ii]"></Node>
-					}
-				</div>
-			}
+			<div>
+
+				@for (int row = 0; row < Grid.GetLength(0); row++)
+				{
+					<div>
+						@for (int col = 0; col < Grid.GetLength(1); col++)
+						{
+							int r = row;
+							int c = col;
+							<div class="node @Grid[row, col].classValue"
+								 @onmousedown="@(async () => { await OnMouseDown(r, c); })"
+								 @onmouseup="@(async () => { await OnMouseUp(r, c); })"
+								 @onmouseover="@(async () => { await OnMouseEnter(r, c); })">
+							</div>
+						}
+					</div>
+				}
+			</div>
 		}
 	}
 </div>
-
-@code {
-
-	static int START_NODE_ROW = 8;
-	static int START_NODE_COL = 15;
-	static int FINISH_NODE_ROW = 12;
-	static int FINISH_NODE_COL = 35;
-
-	private bool loading = false;
-	private List<NodeModelArray> Grid { get; set; }
-	private NodeModel StartNode { get; set; }
-	private NodeModel FinishNode { get; set; }
-
-	protected override async Task OnInitializedAsync()
-	{
-		Grid = await CreateGridAsync();
-		loading = true;
-	}
-
-	private async Task CreateRandomGridAsync()
-	{
-		Random r = new Random();
-
-		await ResetGridAsync();
-		Grid[START_NODE_ROW].Node_Row[START_NODE_COL].IsStart = false;
-		Grid[FINISH_NODE_ROW].Node_Row[FINISH_NODE_COL].IsFinish = false;
-
-		START_NODE_ROW = r.Next(21);
-		START_NODE_COL = r.Next(51);
-		FINISH_NODE_ROW = r.Next(21);
-		FINISH_NODE_COL = r.Next(51);
-
-		Grid[START_NODE_ROW].Node_Row[START_NODE_COL].IsStart = true;
-		Grid[FINISH_NODE_ROW].Node_Row[FINISH_NODE_COL].IsFinish = true;
-
-		await InvokeAsync(StateHasChanged);
-	}
-
-	private async Task ResetGridAsync()
-	{
-		foreach (NodeModelArray row in Grid)
-			foreach (NodeModel col in row.Node_Row)
-				if (col.IsVisited) col.ClearVists();
-
-		await InvokeAsync(StateHasChanged);
-	}
-
-	private async Task<List<NodeModelArray>> CreateGridAsync()
-	{
-		try
-		{
-			List<NodeModelArray> grid = new List<NodeModelArray>();
-			for (int row = 0; row < 20; row++)
-			{
-				List<NodeModel> currentRow = new List<NodeModel>();
-				for (int col = 0; col < 50; col++)
-				{
-					currentRow.Add(new NodeModel(col,
-					row,
-					(row == START_NODE_ROW && col == START_NODE_COL),
-					(row == FINISH_NODE_ROW && col == FINISH_NODE_COL)));
-				}
-				currentRow.TrimExcess();
-				grid.Add(new NodeModelArray(currentRow));
-			}
-			grid.TrimExcess();
-			return grid;
-		}
-		catch (Exception ex)
-		{
-			return null;
-		}
-	}
-
-	private async Task LoadGrid()
-	{
-		Grid = await CreateGridAsync();
-	}
-
-	private async Task VisualizeDijkstra()
-	{
-		StartNode = Grid[START_NODE_ROW].Node_Row[START_NODE_COL];
-		FinishNode = Grid[FINISH_NODE_ROW].Node_Row[FINISH_NODE_COL];
-		List<NodeModel> visitedNodesInOrder = Dijkstra.dijkstra(Grid, StartNode, FinishNode);
-		List<NodeModel> nodesInShortestPathOrder = Dijkstra.GetNodesInShortestPathOrder(FinishNode);
-		await AnimateDijkstra(visitedNodesInOrder, nodesInShortestPathOrder);
-	}
-
-	private async Task AnimateDijkstra(List<NodeModel> visitedNodesInOrder, List<NodeModel> nodesInShortestPathOrder)
-	{
-		for (int i = 0; i <= visitedNodesInOrder.Count; i++)
-		{
-			if (i == visitedNodesInOrder.Count)
-			{
-				await AnimateShortestPath(nodesInShortestPathOrder);
-				return;
-			}
-
-			Grid[visitedNodesInOrder[i].Row].Node_Row[visitedNodesInOrder[i].Col].ShowVist = true;
-			await InvokeAsync(StateHasChanged);
-			await Task.Delay(1);
-		}
-	}
-
-	private async Task AnimateShortestPath(List<NodeModel> nodesInShortestPathOrder)
-	{
-		for (int i = 0; i < nodesInShortestPathOrder.Count; i++)
-		{
-			Grid[nodesInShortestPathOrder[i].Row].Node_Row[nodesInShortestPathOrder[i].Col].ShowVist = false;
-			Grid[nodesInShortestPathOrder[i].Row].Node_Row[nodesInShortestPathOrder[i].Col].ShowPath = true;
-			await InvokeAsync(StateHasChanged);
-			await Task.Delay(1);
-
-		}
-	}
-}

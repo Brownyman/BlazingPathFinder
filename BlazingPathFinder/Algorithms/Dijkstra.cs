@@ -10,15 +10,15 @@ namespace BlazingPathFinder.Algorithms
 {
 	public static class Dijkstra
 	{
-		public static List<NodeModel> dijkstra(List<NodeModelArray> grid, NodeModel startNode, NodeModel finishNode)
+		public static (List<Node>, List<Node>) dijkstra(Node[,] grid, Node startNode, Node finishNode)
 		{
-			List<NodeModel> visitedNodesInOrder = new List<NodeModel>();
+			List<Node> visitedNodesInOrder = new List<Node>();
 			startNode.Distance = 0;
-			List<NodeModel> unvisitedNodes = GetAllNodes(grid);
+			List<Node> unvisitedNodes = GetAllNodes(grid);
 			while(unvisitedNodes.Count > 0)
 			{
 				SortNodesByDistance(ref unvisitedNodes);
-				NodeModel closestNode = unvisitedNodes.RemoveAndReturnFirst();
+				Node closestNode = unvisitedNodes.RemoveAndReturnFirst();
 
 				// If node is a wall, skip it.
 				if (closestNode.IsWall) continue;
@@ -28,7 +28,7 @@ namespace BlazingPathFinder.Algorithms
 				if (double.IsInfinity(closestNode.Distance))
 				{
 					visitedNodesInOrder.TrimExcess();
-					return visitedNodesInOrder;
+					return (visitedNodesInOrder, null);
 				}
 
 				closestNode.IsVisited = true;
@@ -36,54 +36,53 @@ namespace BlazingPathFinder.Algorithms
 				if (closestNode == finishNode)
 				{
 					visitedNodesInOrder.TrimExcess();
-					return visitedNodesInOrder;
+					return (visitedNodesInOrder, GetNodesInShortestPathOrder(finishNode));
 				}
 
 				UpdateUnvisitedNeighbours(closestNode, ref grid);
 			}
 			visitedNodesInOrder.TrimExcess();
-			return visitedNodesInOrder;
+			return (visitedNodesInOrder, GetNodesInShortestPathOrder(finishNode));
 		}
 
-		public static List<NodeModel> GetAllNodes(List<NodeModelArray> grid)
+		public static List<Node> GetAllNodes(Node[,] grid)
 		{
-			List<NodeModel> nodes = new List<NodeModel>();
-			foreach(NodeModelArray row in grid)
-				foreach (NodeModel col in row.Node_Row)
-					nodes.Add(col);
+			List<Node> nodes = new List<Node>();
+			foreach(Node Node in grid)
+					nodes.Add(Node);
 			return nodes;
 		}
 
-		public static void SortNodesByDistance(ref List<NodeModel> unvisitedNodes )
+		public static void SortNodesByDistance(ref List<Node> unvisitedNodes )
 		{
 			unvisitedNodes = unvisitedNodes.OrderBy(x => x.Distance).ToList();
 		}
 
-		public static void UpdateUnvisitedNeighbours(NodeModel closestNode, ref List<NodeModelArray> grid)
+		public static void UpdateUnvisitedNeighbours(Node closestNode, ref Node[,] grid)
 		{
-			List<NodeModel> unvisistedNeighbours = GetUnvisitedNeightbours(closestNode, ref grid);
-			foreach(NodeModel neighbour in unvisistedNeighbours)
+			List<Node> unvisistedNeighbours = GetUnvisitedNeightbours(closestNode, ref grid);
+			foreach(Node neighbour in unvisistedNeighbours)
 			{
 				neighbour.Distance = closestNode.Distance + 1;
 				neighbour.PrevNode = closestNode;
 			}
 		}
 
-		public static List<NodeModel> GetUnvisitedNeightbours(NodeModel node, ref List<NodeModelArray> grid)
+		public static List<Node> GetUnvisitedNeightbours(Node node, ref Node[,] grid)
 		{
-			List<NodeModel> neighbours = new List<NodeModel>();
+			List<Node> neighbours = new List<Node>();
 			(int col, int row) = node.ReturnColAndRow();
-			if (row > 0) neighbours.Add(grid[row - 1].Node_Row[col]);
-			if (row < grid.Count - 1) neighbours.Add(grid[row + 1].Node_Row[col]);
-			if (col > 0) neighbours.Add(grid[row].Node_Row[col - 1]);
-			if (col < grid[0].Node_Row.Count - 1) neighbours.Add(grid[row].Node_Row[col + 1]);
+			if (row > 0) neighbours.Add(grid[row - 1, col]);
+			if (row < grid.GetLength(0) - 1) neighbours.Add(grid[row + 1, col]);
+			if (col > 0) neighbours.Add(grid[row, col - 1]);
+			if (col < grid.GetLength(1) - 1) neighbours.Add(grid[row, col + 1]);
 			return neighbours.Where(x => !x.IsVisited).ToList();
 		}
 
-		public static List<NodeModel> GetNodesInShortestPathOrder(NodeModel finishNode)
+		public static List<Node> GetNodesInShortestPathOrder(Node finishNode)
 		{
-			List<NodeModel> nodesInShortestPathOrder = new List<NodeModel>();
-			NodeModel currentNode = finishNode;
+			List<Node> nodesInShortestPathOrder = new List<Node>();
+			Node currentNode = finishNode;
 			while(currentNode != null)
 			{
 				nodesInShortestPathOrder.Insert(0, currentNode);
